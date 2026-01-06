@@ -1,0 +1,553 @@
+\documentclass[a4paper, 12pt, twoside]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+\usepackage{lmodern}
+\usepackage{ae,aecompl}
+\usepackage[top=2.5cm, bottom=2cm,
+			left=3cm, right=2.5cm,
+			headheight=15pt]{geometry}
+\usepackage{graphicx}
+\usepackage{eso-pic}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{float}
+
+
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{codebg}{RGB}{245,247,250}
+\definecolor{codeframe}{RGB}{180,190,200}
+
+\lstset{
+	language=Python,
+	basicstyle=\ttfamily\small,
+	backgroundcolor=\color{codebg},
+	frame=single,
+	rulecolor=\color{codeframe},
+	framesep=8pt,
+	breaklines=true,
+	showstringspaces=false,
+	tabsize=4,
+	keywordstyle=\bfseries,
+	commentstyle=\itshape,
+	stringstyle=\ttfamily,
+	captionpos=b
+}
+
+\input{pagedegarde}
+
+\title{Conception d’un cartable numérique intelligent}
+\entreprise{Université Paris Nanterre}
+\datedebut{début du semestre}
+\datefin{6 janvier 2026}
+
+\membrea{Bessahraoui Ilyana -- 45016037}
+\membreb{Khelfane Massil -- 43011881}
+
+\begin{document}
+\pagedegarde
+
+
+\section*{Remerciements}
+Nous remercions notre enseignant d'Algorithmique et Programmation de la Licence 2 MIASHS pour l’encadrement du projet et les ressources mises à disposition. 
+\newpage
+
+\tableofcontents
+\newpage
+
+
+\section{Introduction}
+
+Dans le cadre de la Licence 2 MIASHS à l’Université Paris Nanterre, nous avons réalisé un projet
+d’algorithmique et de programmation visant à concevoir un \textbf{cartable numérique}.
+L’objectif est de proposer une application utile au quotidien pour un étudiant, permettant de
+\textbf{centraliser, organiser, consulter et exploiter} ses ressources pédagogiques.
+
+Notre solution regroupe quatre fonctionnalités principales :
+\begin{itemize}
+\item \textbf{Cloud local} : gestion et organisation de documents (import, ouverture, suppression, dossiers)
+\item \textbf{Notes} : prise de notes, édition et sauvegarde (avec autosave et raccourcis)
+\item \textbf{QCM IA} : génération d’un quiz à partir d’un cours texte + mode révision + corrigé
+\item \textbf{Carrière IA} : génération d’un CV structuré + export PDF + coach d’entretien (question + feedback)
+\end{itemize}
+
+Enfin, l’application intègre une \textbf{IA locale} via Ollama (modèle \texttt{llama3.1:latest}),
+garantissant une meilleure confidentialité des données.
+
+
+\section{Environnement de travail}
+
+Le projet a été développé sur un environnement Windows, en Python 3. L’interface graphique a été
+implémentée en Tkinter, bibliothèque de Python (donc simple à installer et portable).
+La persistance des données repose sur des fichiers locaux (documents copiés dans un répertoire de
+l’application) et un index JSON permettant de conserver l’état entre deux exécutions.
+
+\subsection{Lancement de l’application}
+
+La Figure \ref{fig:lancement} présente un exemple d’exécution : l’application est lancée depuis
+un terminal, puis ouvre immédiatement l’interface graphique.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{lancement app.png}
+\caption{Exemple de lancement : exécution de \texttt{python src/app\_gui.py} depuis un terminal Windows, puis ouverture de l’interface.}
+\label{fig:lancement}
+\end{figure}
+
+
+\section{Description du projet et objectifs}
+
+\subsection{Objectif principal}
+
+L’objectif principal est de créer une application centrée sur les besoins d’un étudiant :
+\begin{itemize}
+\item \textbf{Centraliser} ses cours et documents au même endroit
+\item \textbf{Organiser} ses fichiers et notes de manière simple (dossiers, liste)
+\item \textbf{Réviser} grâce à des QCM générés automatiquement à partir de contenus
+\item \textbf{Préparer son insertion professionnelle} (CV + entretien)
+\end{itemize}
+
+\subsection{Interface générale et parcours utilisateur}
+
+La Figure \ref{fig:accueil} montre la page d’accueil : elle sert de point d’entrée, avec des cartes
+claires qui redirigent vers les modules. Ce choix améliore la lisibilité et rend l’application plus
+accessible qu’un menu uniquement textuel.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{accueil cartable .png}
+\caption{Page d’accueil : accès rapide aux modules Cloud, Notes, QCM IA et Carrière IA. L’utilisateur sélectionne un module via « Ouvrir ».}
+\label{fig:accueil}
+\end{figure}
+
+
+\section{Bibliothèques, Outils et technologies}
+
+\begin{itemize}
+\item \textbf{Python 3} : langage principal
+\item \textbf{Tkinter} : interface graphique
+\item \textbf{JSON} : persistance (index des documents / notes)
+\item \textbf{Ollama} : exécution locale d’IA
+\item \textbf{LLaMA 3.1} (\texttt{llama3.1:latest}) : génération QCM, CV, entretien
+\item \textbf{ReportLab} (ou équivalent) : export PDF du CV (selon l’implémentation du projet)
+\end{itemize}
+
+
+\section{Travail réalisé}
+
+\subsection{Organisation du projet}
+
+Le projet est structuré autour de plusieurs fichiers :
+\begin{itemize}
+\item \texttt{app\_gui.py} : interface graphique et navigation
+\item \texttt{storage.py} : logique de stockage (documents, dossiers, notes)
+\item \texttt{ollama\_client.py} : appels IA locaux (QCM, CV, entretien)
+\item \texttt{cv\_pdf.py} : génération PDF du CV
+\end{itemize}
+
+Cette organisation sépare la logique métier (stockage / IA) de l’interface, ce qui rend le code
+plus clair et plus maintenable.
+
+
+\subsection{Module Cloud (gestion de fichiers)}
+
+Ce module permet :
+\begin{itemize}
+\item importer un document depuis le système
+\item afficher la liste des documents disponibles
+\item ouvrir un document avec l’application par défaut
+\item supprimer un document
+\item créer des dossiers et y ranger des documents
+\end{itemize}
+
+La Figure \ref{fig:cloud} montre l’écran Cloud : à gauche la liste des documents, à droite les
+dossiers et actions de rangement. L’utilisateur peut organiser ses cours comme il le souhaite.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{cloud.png}
+\caption{Module Cloud : liste des documents (zone centrale) et panneau « Dossiers » (droite) pour créer un dossier et ranger un document sélectionné.}
+\label{fig:cloud}
+\end{figure}
+
+\subsubsection{Exemple de persistance via index JSON}
+
+Pour conserver l’état de l’application, les documents importés sont référencés dans un fichier JSON.
+Le principe : chaque import met à jour un index (nom, chemin local, dossier associé).
+
+\begin{lstlisting}[caption={Exemple de structure d’index JSON utilisée pour les documents (principe)}]
+{
+  "documents": [
+    {"name": "cours_algo.txt", "path": "data/docs/cours_algo.txt", "folder": "Algo"},
+    {"name": "td_stats.md", "path": "data/docs/td_stats.md", "folder": null}
+  ],
+  "folders": ["Algo", "Stats"]
+}
+\end{lstlisting}
+
+\subsubsection{Import d’un document (logique)}
+
+Le code ci-dessous illustre la logique : vérifier l’existence du fichier, le copier dans le stockage local,
+puis mettre à jour l’index.
+
+\begin{lstlisting}[caption={Exemple de fonction d’import d’un document (principe)}]
+def import_document(src_path: str) -> None:
+    if not os.path.exists(src_path):
+        raise FileNotFoundError("Fichier introuvable.")
+
+    name = os.path.basename(src_path)
+    dst_path = os.path.join(DOCS_DIR, name)
+
+    # Copie dans l'espace de stockage local
+    shutil.copy2(src_path, dst_path)
+
+    # Mise à jour de l'index JSON
+    index = load_index()
+    index["documents"].append({"name": name, "path": dst_path, "folder": None})
+    save_index(index)
+\end{lstlisting}
+
+\subsubsection{Ranger un document dans un dossier}
+
+Le rangement consiste à modifier un champ \texttt{folder} dans l’index. Cette approche évite de déplacer physiquement
+le fichier (plus simple et plus robuste sous Windows).
+
+\begin{lstlisting}[caption={Exemple de rangement d’un document dans un dossier (principe)}]
+def move_document_to_folder(doc_name: str, folder: str) -> None:
+    index = load_index()
+    for d in index["documents"]:
+        if d["name"] == doc_name:
+            d["folder"] = folder
+            save_index(index)
+            return
+    raise ValueError("Document non trouvé.")
+\end{lstlisting}
+
+
+\subsection{Module Notes (éditeur de texte)}
+
+Le module Notes permet de créer et modifier des notes, avec :
+\begin{itemize}
+\item champ « Titre »
+\item zone de texte « Contenu »
+\item boutons : Créer, Enregistrer, Supprimer, Rafraîchir
+\item autosauvegarde + raccourci Ctrl+S
+\end{itemize}
+
+La Figure \ref{fig:notes} illustre l’éditeur : une liste de notes à gauche, et l’éditeur complet à droite.
+Ce design est proche d’un bloc-notes simplifié, adapté à une prise de notes rapide en cours.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{editeur de texte _ bloc note .png}
+\caption{Module Notes : liste « Mes notes » à gauche, édition à droite avec barre d’actions (Créer, Enregistrer, Supprimer).}
+\label{fig:notes}
+\end{figure}
+
+\subsubsection{Création / mise à jour d’une note}
+
+Les notes sont stockées localement (fichier texte ou entrée dans un index JSON selon l’implémentation),
+ce qui garantit leur persistance.
+
+\begin{lstlisting}[caption={Création ou modification d’une note (principe)}]
+def create_note(title: str, content: str) -> None:
+    index = load_notes_index()
+    if title in index:
+        raise ValueError("La note existe déjà.")
+    index[title] = content
+    save_notes_index(index)
+def edit_note(title: str, content: str) -> None:
+    index = load_notes_index()
+    if title not in index:
+        raise ValueError("Note introuvable.")
+    index[title] = content
+    save_notes_index(index)
+\end{lstlisting}
+
+\subsubsection{Autosave et ergonomie (Ctrl+S)}
+L’autosave évite les pertes de contenu : toutes les X secondes, si un titre est présent, la note est sauvegardée.
+Le raccourci clavier Ctrl+S renforce l’ergonomie (habitudes proches des logiciels classiques).
+\begin{lstlisting}[caption={Autosave (principe) : sauvegarde périodique si un titre est présent}]
+def _autosave_notes(self):
+    try:
+        title = self.note_title_var.get().strip()
+        content = self.note_text.get("1.0", tk.END).strip()
+        if title:
+            if title_exists(title):
+                edit_note(title, content)
+            else:
+                create_note(title, content)
+    except Exception:
+        pass
+    finally:
+        self.after(20000, self._autosave_notes)  # toutes les 20 secondes
+\end{lstlisting}
+
+
+\subsection{Module QCM IA (génération + révision + corrigé)}
+
+Ce module permet à l’utilisateur de sélectionner un fichier texte contenant un cours,
+de choisir le nombre de questions et la difficulté, puis de lancer une génération IA.
+Le QCM devient interactif : l’utilisateur répond question par question, puis obtient
+une correction détaillée.
+
+La Figure \ref{fig:qcm} montre l’écran QCM : zone de génération en haut, puis zone quiz et
+zone correction en bas. La correction s’affiche après « Terminer ».
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{qcm.png}
+\caption{Module QCM IA : génération depuis fichier texte, quiz interactif (réponses), navigation (Précédent/Suivant), et zone de correction.}
+\label{fig:qcm}
+\end{figure}
+
+\subsubsection{Appel à l’IA et format attendu}
+
+Pour rendre le système robuste, on impose à l’IA une sortie structurée JSON (questions, choix, réponse, explication).
+Cela évite les problèmes de parsing et garantit la stabilité de l’interface interactive.
+
+\begin{lstlisting}[caption={Exemple de format JSON attendu pour le QCM (principe)}]
+{
+  "questions": [
+    {
+      "question": "Quel est le rôle principal d'un système d'exploitation ?",
+      "choices": ["Gérer le matériel", "Compiler du code", "Créer des pages web", "Dessiner"],
+      "answer": "A",
+      "explanation": "Le système d'exploitation gère les ressources matérielles..."
+    }
+  ]
+}
+\end{lstlisting}\vspace{10cm}
+
+\subsubsection{Génération QCM (logique)}
+
+L’interface lit le fichier cours, appelle l’IA, récupère la réponse, parse le JSON, puis charge les questions.
+
+\begin{lstlisting}[caption={Génération QCM côté interface (principe)}]
+with open(path, "r", encoding="utf-8") as f:
+    course_text = f.read().strip()
+
+raw = generate_qcm_quiz(course_text, n=n_questions, difficulty=diff)
+data = json.loads(raw)  # l'IA doit renvoyer du JSON
+self.qcm_questions = data["questions"]
+\end{lstlisting}
+
+\subsubsection{Navigation et calcul du score}
+
+Chaque question est affichée avec des boutons radio. Les réponses sont stockées,
+et à la fin on calcule le score et on affiche la correction détaillée.
+
+\begin{lstlisting}[caption={Correction : comparaison réponses utilisateur / réponses attendues (principe)}]
+score = 0
+for i, q in enumerate(self.qcm_questions):
+    user = user_answers.get(i)
+    correct = q["answer"]
+    if user == correct:
+        score += 1
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Construction d'un corrigé détaillé (principe)}]
+lines = []
+for i, q in enumerate(self.qcm_questions, start=1):
+    lines.append(f"Q{i}: {q['question']}")
+    lines.append(f"Bonne réponse: {q['answer']}")
+    lines.append(f"Explication: {q['explanation']}")
+    lines.append("")
+correction_text = "\n".join(lines)
+\end{lstlisting}
+
+
+\subsection{Module Carrière IA (CV + PDF + coach d’entretien)}
+
+Le module Carrière aide l’utilisateur à préparer son insertion professionnelle.
+Il est composé de deux sous-parties :
+\begin{itemize}
+\item Assistant CV : formulaire brut $\rightarrow$ génération IA $\rightarrow$ prévisualisation $\rightarrow$ export PDF
+\item Coach d’entretien : génération de questions et feedback sur une réponse
+\end{itemize}
+
+\subsubsection{Assistant CV}
+
+La Figure \ref{fig:cv1} illustre le formulaire CV : l’utilisateur saisit des informations simples
+(formation, compétences, expériences), puis clique sur « Générer CV (IA) ». Le résultat est ensuite
+prévisualisé et peut être exporté au format PDF.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{carrière 1.png}
+\caption{Assistant CV : formulaire (gauche) + prévisualisation (droite). L’IA transforme des informations brutes en contenu structuré.}
+\label{fig:cv1}
+\end{figure}
+
+\subsubsection{Génération CV structuré (principe)}
+
+On envoie à l’IA un dictionnaire d’informations, puis on récupère un JSON structuré (header, profile, skills, etc.)
+pour pouvoir ensuite alimenter l’aperçu et l’export PDF.
+
+\begin{lstlisting}[caption={Exemple d’appel IA pour générer un CV structuré (principe)}]
+data = {
+  "name": name,
+  "target_title": target_title,
+  "contact": contact,
+  "profile": profile_raw,
+  "education": edu_raw,
+  "skills": skills_raw,
+  "experience": exp_raw,
+  "projects": projects_raw
+}
+
+cv_json = generate_cv_structured(data)  # retourne un dict (JSON parsé)
+\end{lstlisting}\vspace{1cm}
+
+
+\subsubsection{Export PDF}
+
+L’export PDF utilise les données structurées et applique un style (modèle + couleur + photo optionnelle).
+Le PDF produit est prêt à être envoyé pour des candidatures.\vspace{1cm}
+
+\begin{lstlisting}[caption={Export PDF du CV : passage des sections structurées (principe)}]
+sections = [
+  ("Profil", cv_json.get("profile", "")),
+  ("Formation", "\n".join(cv_json.get("education", []))),
+  ("Compétences", "\n".join(cv_json.get("skills", [])))
+]
+
+export_cv_pdf(
+  out_path,
+  template=template,
+  accent_hex=accent,
+  photo_path=photo_path_or_none,
+  full_name=full_name,
+  title_line=title_line,
+  contact=contact,
+  sections=sections
+)
+\end{lstlisting}
+
+\subsubsection{Coach d’entretien}
+
+La Figure \ref{fig:cv2} illustre la zone « coach d’entretien » : l’utilisateur renseigne un poste visé,
+génère une question, puis écrit sa réponse. L’IA retourne ensuite un feedback (points positifs, points à améliorer,
+reformulation possible).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{carrière 2.png}
+\caption{Coach d’entretien : champ « poste visé », génération d’une question et feedback IA sur la réponse de l’utilisateur.}
+\label{fig:cv2}
+\end{figure}\vspace{2cm}
+
+\begin{lstlisting}[caption={Génération d’une question d’entretien (principe)}]
+job = self.job_var.get().strip()
+question = interview_question(job)
+self.question_box.insert("1.0", question)
+\end{lstlisting}\vspace{0.5cm}
+
+\begin{lstlisting}[caption={Feedback IA sur une réponse d’entretien (principe)}]
+answer = self.answer_box.get("1.0", tk.END).strip()
+feedback = interview_feedback(job, answer)
+self.feedback_box.insert("1.0", feedback)
+\end{lstlisting}
+
+
+\section{IA : aide dans la réalisation du projet}
+
+L’intelligence artificielle a été utilisée à plusieurs niveaux :
+\begin{itemize}
+\item \textbf{ChatGPT} : brainstorming sur les fonctionnalités utiles d’un cartable numérique
+\item \textbf{Mistral AI} : explications de bugs, compréhension d’erreurs Python/Tkinter
+\item \textbf{Claude AI} : réflexion sur le parcours utilisateur et l’architecture globale
+\item \textbf{LLaMA via Ollama} : intégration directe dans l’application (QCM, CV, entretien)
+\end{itemize}
+
+Dans notre cas, l’IA ne sert pas seulement à écrire du texte : elle est intégrée comme un moteur capable de produire des
+données structurées, réutilisées ensuite dans l’interface.
+
+
+\section{Fonctionnement de l’IA intégrée (Ollama + LLaMA)}
+
+L’IA utilisée repose sur Ollama, qui permet d’exécuter localement un modèle de langage.
+Nous utilisons le modèle \textbf{LLaMA 3.1} : \texttt{llama3.1:latest}.
+Ce choix apporte plusieurs avantages :
+\begin{itemize}
+\item Aucune dépendance à une API externe
+\item Meilleur respect des données personnelles (texte des cours et informations CV)
+\item Possibilité d’utiliser l’application hors-ligne (hors installation initiale du modèle)
+\end{itemize}
+
+
+\section{Difficultés rencontrées}
+
+Les difficultés principales ont été :
+\begin{itemize}
+\item Parsing des réponses IA : nécessité d’imposer un format structuré (JSON)
+\item Gestion des erreurs (format inattendu, champ manquant, etc.)
+\item Ergonomie Tkinter : scrolling vertical, placement des éléments, cohérence visuelle
+\item Maintenir la stabilité quand l’utilisateur génère plusieurs fois (QCM/CV) dans la même session
+\end{itemize}
+
+Ces difficultés ont été résolues par des tests, une meilleure gestion des exceptions et une structuration plus rigoureuse
+des entrées/sorties de l’IA.
+
+
+\section{Bilan}
+
+\subsection{Conclusion}
+
+Ce projet nous a permis de consolider nos compétences en Python, en conception d’interface graphique, en structuration
+d’une application multi-modules, et en intégration d’une IA locale. Le cartable numérique réalisé répond aux besoins visés :
+organisation de documents, prise de notes, révision par QCM et préparation à la carrière.
+
+\subsection{Perspectives}
+
+Des améliorations possibles :
+\begin{itemize}
+\item Support natif des formats \texttt{.docx} (via bibliothèques dédiées) et extraction automatique du texte
+\item Ajout de statistiques de révision (scores, progression, historique)
+\item Modèles CV supplémentaires + prévisualisation plus avancée (mise en page proche d’un vrai éditeur)
+\item Synchronisation cloud distante (optionnelle) pour multi-appareils
+\end{itemize}
+
+
+\newpage
+\section{Bibliographie}
+\renewcommand{\bibname}{}
+\renewcommand{\refname}{}
+\begin{thebibliography}{2}
+   \bibitem[LAM94]{lam1} L. LAMPORT, {\it \LaTeX : A Document preparation system}, Addison-Wesley, 1994
+\end{thebibliography}
+
+\newpage
+\section{Webographie}
+\begin{thebibliography}{3}
+   \bibitem[OLL]{ollama} \url{https://ollama.com}
+   \bibitem[LLA]{llama} \url{https://ai.meta.com/llama}
+   \bibitem[TK]{tk} \url{https://docs.python.org/3/library/tkinter.html}
+\end{thebibliography}
+
+
+\newpage
+\section{Annexes}
+\appendix
+\makeatletter
+\def\@seccntformat#1{Annexe~\csname the#1\endcsname:\quad}
+\makeatother
+
+
+\section{Exemple d’exécution du projet}
+Voir Figure \ref{fig:lancement} (lancement) + Figures \ref{fig:accueil}, \ref{fig:cloud}, \ref{fig:notes}, \ref{fig:qcm}, \ref{fig:cv1}, \ref{fig:cv2}.
+
+\section{Manuel utilisateur}
+\begin{itemize}
+\item Lancer : \texttt{python src/app\_gui.py}
+\item Aller sur « Accueil » puis cliquer « Ouvrir » sur un module
+\item Cloud : importer / ouvrir / supprimer / dossiers
+\item Notes : créer titre, écrire, Ctrl+S, autosave
+\item QCM : choisir un fichier texte, choisir nombre de questions et difficulté, générer, répondre, terminer
+\item Carrière : remplir formulaire, générer CV, exporter PDF, coach d’entretien
+\end{itemize}
+
+\end{document}
